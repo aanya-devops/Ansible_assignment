@@ -1,0 +1,24 @@
+[Unit]
+Description=SonarQube Service
+After=network.target
+
+[Service]
+Type=forking
+
+User={{ sonarqube_user }}
+Group={{ sonarqube_group }}
+
+Environment="JAVA_HOME={{ sonarqube_java_home }}"
+Environment="PATH={{ sonarqube_java_home }}/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin"
+
+ExecStart={{ sonarqube_install_dir }}/bin/linux-x86-64/sonar.sh start
+ExecStop={{ sonarqube_install_dir }}/bin/linux-x86-64/sonar.sh stop
+
+Restart=on-failure
+RestartSec=10
+
+LimitNOFILE={{ sonarqube_nofile_limit }}
+LimitNPROC={{ sonarqube_nproc_limit }}
+
+[Install]
+WantedBy=multi-user.target

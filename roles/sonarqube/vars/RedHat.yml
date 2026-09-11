@@ -1,0 +1,4 @@
+---
+sonarqube_os_name: "RHEL"
+sonarqube_java_home: "/opt/java17"
+sonarqube_java_path: "/opt/java17/bin/java"

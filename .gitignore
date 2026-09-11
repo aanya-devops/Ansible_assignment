@@ -1,0 +1,6 @@
+.venv/
+*.backup
+*.bak
+__pycache__/
+*.pyc
+roles/sonarqube_backup/

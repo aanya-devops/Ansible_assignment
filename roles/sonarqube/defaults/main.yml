@@ -1,0 +1,37 @@
+---
+sonarqube_version: "10.6.0.92116"
+
+sonarqube_user: "sonarqube"
+sonarqube_group: "sonarqube"
+
+sonarqube_install_parent: "/opt"
+sonarqube_install_dir: "/opt/sonarqube"
+
+sonarqube_download_dir: "/opt/sonarqube-download"
+
+sonarqube_archive: "/opt/sonarqube-download/sonarqube-{{ sonarqube_version }}.zip"
+
+
+sonarqube_download_url: "https://binaries.sonarsource.com/Distribution/sonarqube/sonarqube-{{ sonarqube_version }}.zip"
+
+sonarqube_web_host: "0.0.0.0"
+sonarqube_web_port: 9000
+
+sonarqube_web_context: ""
+
+sonarqube_search_java_opts: "-Xms512m -Xmx512m"
+
+sonarqube_db_type: "postgresql"
+sonarqube_db_host: "localhost"
+sonarqube_db_port: 5432
+sonarqube_db_name: "sonarqube"
+sonarqube_db_user: "sonarqube"
+sonarqube_db_password: "sonarqube123"
+
+sonarqube_service_name: "sonarqube"
+
+sonarqube_java_package_debian: "openjdk-17-jdk"
+sonarqube_java_home: "/opt/java17"
+
+sonarqube_nofile_limit: 65536
+sonarqube_nproc_limit: 4096

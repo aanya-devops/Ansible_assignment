@@ -1,0 +1,9 @@
+---
+- name: Reload systemd
+  ansible.builtin.systemd:
+    daemon_reload: true
+
+- name: Restart SonarQube
+  ansible.builtin.systemd:
+    name: "{{ sonarqube_service_name }}"
+    state: restarted

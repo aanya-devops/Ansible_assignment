@@ -1,0 +1,156 @@
+---
+- name: Load OS specific variables
+  ansible.builtin.include_vars:
+    file: "{{ ansible_os_family }}.yml"
+
+- name: Install SonarQube prerequisites
+  ansible.builtin.include_tasks:
+    file: "{{ ansible_os_family | lower }}.yml"
+
+- name: Create SonarQube group
+  ansible.builtin.group:
+    name: "{{ sonarqube_group }}"
+    state: present
+
+- name: Create SonarQube user
+  ansible.builtin.user:
+    name: "{{ sonarqube_user }}"
+    group: "{{ sonarqube_group }}"
+    shell: /bin/bash
+    create_home: false
+    system: true
+    state: present
+
+- name: Create SonarQube installation directory
+  ansible.builtin.file:
+    path: "{{ sonarqube_install_parent }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Check installed SonarQube version
+  ansible.builtin.stat:
+    path: "{{ sonarqube_install_dir }}/lib/sonar-application-{{ sonarqube_version }}.jar"
+  register: sonarqube_version_check
+
+- name: Create SonarQube download directory
+  ansible.builtin.file:
+    path: /opt/sonarqube-download
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Check SonarQube archive
+  ansible.builtin.stat:
+    path: "{{ sonarqube_archive }}"
+  register: sonarqube_archive_check
+
+- name: Create SonarQube download directory
+  ansible.builtin.file:
+    path: "{{ sonarqube_download_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Download SonarQube
+  ansible.builtin.shell:
+    cmd: >
+      wget -c
+      -O "{{ sonarqube_archive }}"
+      "{{ sonarqube_download_url }}"
+  args:
+    creates: "{{ sonarqube_archive }}"
+  when:
+    - not sonarqube_version_check.stat.exists
+    - not sonarqube_archive_check.stat.exists
+
+- name: Install unzip
+  ansible.builtin.package:
+    name: unzip
+    state: present
+
+
+- name: Extract SonarQube
+  ansible.builtin.unarchive:
+    src: "{{ sonarqube_archive }}"
+    dest: "{{ sonarqube_install_parent }}"
+    remote_src: true
+  when: not sonarqube_version_check.stat.exists
+
+
+- name: Remove old SonarQube directory
+  ansible.builtin.file:
+    path: "{{ sonarqube_install_dir }}"
+    state: absent
+  when: not sonarqube_version_check.stat.exists
+
+- name: Move SonarQube to installation directory
+  ansible.builtin.command:
+    cmd: "mv {{ sonarqube_install_parent }}/sonarqube-{{ sonarqube_version }} {{ sonarqube_install_dir }}"
+  args:
+    creates: "{{ sonarqube_install_dir }}"
+  when: not sonarqube_version_check.stat.exists
+
+- name: Set SonarQube ownership
+  ansible.builtin.file:
+    path: "{{ sonarqube_install_dir }}"
+    owner: "{{ sonarqube_user }}"
+    group: "{{ sonarqube_group }}"
+    recurse: true
+
+- name: Make SonarQube startup script executable
+  ansible.builtin.file:
+    path: "{{ sonarqube_install_dir }}/bin/linux-x86-64/sonar.sh"
+    mode: "0755"
+    owner: "{{ sonarqube_user }}"
+    group: "{{ sonarqube_group }}"
+
+- name: Create SonarQube data directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ sonarqube_user }}"
+    group: "{{ sonarqube_group }}"
+    mode: "0755"
+  loop:
+    - "{{ sonarqube_install_dir }}/data"
+    - "{{ sonarqube_install_dir }}/logs"
+    - "{{ sonarqube_install_dir }}/temp"
+
+- name: Configure SonarQube
+  ansible.builtin.template:
+    src: sonar.properties.j2
+    dest: "{{ sonarqube_install_dir }}/conf/sonar.properties"
+    owner: "{{ sonarqube_user }}"
+    group: "{{ sonarqube_group }}"
+    mode: "0644"
+  notify: Restart SonarQube
+
+- name: Configure SonarQube systemd service
+  ansible.builtin.template:
+    src: sonarqube.service.j2
+    dest: "/etc/systemd/system/{{ sonarqube_service_name }}.service"
+    owner: root
+    group: root
+    mode: "0644"
+  notify:
+    - Reload systemd
+    - Restart SonarQube
+
+- name: Configure SonarQube limits
+  ansible.builtin.template:
+    src: sonarqube-limits.conf.j2
+    dest: "/etc/security/limits.d/sonarqube.conf"
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Enable and start SonarQube
+  ansible.builtin.systemd:
+    name: "{{ sonarqube_service_name }}"
+    enabled: true
+    state: started
+    daemon_reload: true

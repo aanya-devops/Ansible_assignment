@@ -1,0 +1,4 @@
+---
+sonarqube_os_name: "Ubuntu"
+sonarqube_java_home: "/usr/lib/jvm/java-17-openjdk-amd64"
+sonarqube_java_path: "/usr/bin/java"

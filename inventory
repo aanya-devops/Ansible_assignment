@@ -1,0 +1,8 @@
+[ubuntu]
+ubuntu1 ansible_host=3.108.196.206 ansible_user=ubuntu ansible_private_key_file=/home/mitalis/.ssh/otssh-key.pem
+
+[redhat]
+redhat1 ansible_host=3.110.221.215 ansible_user=ec2-user ansible_private_key_file=/home/mitalis/.ssh/otssh-key.pem
+
+[all:vars]
+ansible_python_interpreter=/usr/bin/python3

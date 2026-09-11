@@ -1,0 +1,46 @@
+---
+- name: Update apt cache
+  ansible.builtin.apt:
+    update_cache: true
+    cache_valid_time: 3600
+    lock_timeout: 60
+
+- name: Install PostgreSQL and prerequisites
+  ansible.builtin.apt:
+    name:
+      - postgresql
+      - postgresql-contrib
+      - python3-psycopg2
+      - unzip
+      - wget
+      - curl
+      - ca-certificates
+      - procps
+    state: present
+    lock_timeout: 60
+
+- name: Install Java on Debian and Ubuntu
+  ansible.builtin.apt:
+    name: "{{ sonarqube_java_package_debian }}"
+    state: present
+    lock_timeout: 60
+
+- name: Start and enable PostgreSQL
+  ansible.builtin.systemd:
+    name: postgresql
+    state: started
+    enabled: true
+
+- name: Create SonarQube database user
+  become_user: postgres
+  community.postgresql.postgresql_user:
+    name: "{{ sonarqube_db_user }}"
+    password: "{{ sonarqube_db_password }}"
+    state: present
+
+- name: Create SonarQube database
+  become_user: postgres
+  community.postgresql.postgresql_db:
+    name: "{{ sonarqube_db_name }}"
+    owner: "{{ sonarqube_db_user }}"
+    state: present
